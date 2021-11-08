@@ -5,7 +5,60 @@ const app = express();
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+
+const websites =[
+    {
+        name: 'kitco',
+        address: 'http://www.kitcometals.com/news/',
+        base: ''
+    },
+    {
+        name: 'miningtech',
+        address: 'https://www.mining-technology.com/sector/commodities/base-metals/',
+        base: ''
+    },
+    {
+        name: 'mining.com',
+        address: 'https://www.mining.com/commodity/iron-ore/',
+        base: ''
+
+    },
+    {
+        name: 'atradious',
+        address: 'https://atradiuscollections.com/us/blog',
+        base: ''
+
+    },
+    {
+        name: 'steelmarketupdate',
+        address: 'https://www.steelmarketupdate.com/news',
+        base:'https://www.steelmarketupdate.com'
+    }
+]
+
 const articles = [];
+
+websites.forEach(website => {
+    axios.get(website.address)
+    .then(response => {
+        const html = response.data;
+        const $ = cheerio.load(html);
+         
+        $(('a:contains("price")') , html).each(function() {
+            
+            const  title =  $(this).text().replace(/\s\s+/g, ' ').trim();
+            const  link = $(this).attr('href');
+            
+            
+            articles.push({
+                title,
+                link: website.base + link,
+                source: website.name,
+            })
+        });
+        })
+        
+    });
 
 
 app.get('/', (req, res) => {
@@ -14,26 +67,8 @@ app.get('/', (req, res) => {
   });
 
 app.get('/news',(req,res)=>{
-    axios.get('https://www.mining-technology.com/sector/commodities/base-metals/').then((response) =>{
-          const html = response.data;
-          const $ = cheerio.load(html);
-
-          $('a:contains("price")', html).each(function(){
-              const title = $(this).text();
-              const link = $(this).attr('href');
-              articles.push({
-                  title,
-                  link
-              });
-              console.log(title);
-              console.log(link);
-          });
-          res.json(articles);
-          
-      }).catch((err) => {
-          console.log(err);
-      });      
-  })
+    res.json(articles)
+})
 
   app.get('/rigs',(req,res)=>{
     axios.get('https://www2.gerdau.com/market-update').then((response) =>{
