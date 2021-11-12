@@ -33,21 +33,30 @@ const websites =[
         name: 'steelmarketupdate',
         address: 'https://www.steelmarketupdate.com/news',
         base:'https://www.steelmarketupdate.com'
-    }
+    },
+    {
+        name: 'metabullitin',
+        address: 'https://www.metalbulletin.com/steel/flat-products/plate.html',
+        base: 'https://www.metalbulletin.com'
+    },
 ]
 
 const articles = [];
+const rigs = [];
+const test = [];
 
 websites.forEach(website => {
     axios.get(website.address)
     .then(response => {
         const html = response.data;
         const $ = cheerio.load(html);
+        
          
-        $(('a:contains("price")') , html).each(function() {
+        $(('a:contains("price")') || ('a:contains("steel-production")') , html).each(function() {
             
             const  title =  $(this).text().replace(/\s\s+/g, ' ').trim();
             const  link = $(this).attr('href');
+            
             
             
             articles.push({
@@ -66,9 +75,14 @@ app.get('/', (req, res) => {
     
   });
 
+  app.get('/express_backend/', (req, res) => { //Line 9
+    res.send({ express: 'YOUR EXPRESS BACKEND IS CONNECTED TO REACT' }); //Line 10
+  }); 
+
 app.get('/news',(req,res)=>{
-    res.json(articles)
+    res.send(articles);
 })
+
 
   app.get('/rigs',(req,res)=>{
     axios.get('https://www2.gerdau.com/market-update').then((response) =>{
@@ -78,11 +92,11 @@ app.get('/news',(req,res)=>{
           $('a:contains("Oil and Gas Rotary Rig Counts (U.S)")', html).each(function(){
               const title = $(this).text();
               const link = $(this).attr('href');
-              const target = $(this).parent().parent().siblings().children().text()
+              const target = $(this).parent().parent().siblings().children().text().replace(/\s\s+/g, ' ').trim()
              
 
               
-              articles.push({
+              rigs.push({
                   title,
                   link,
                   target
@@ -92,12 +106,16 @@ app.get('/news',(req,res)=>{
               console.log(target);
               
           });
-          res.json(articles);
+          res.setHeader('Content-Type', 'application/json')
+          res.send(JSON.stringify(rigs));
           
       }).catch((err) => {
           console.log(err);
       });      
-  })
+  });
+
+
+
 
 app.listen(PORT, () => {
 console.log(`Server running at http://localhost:${PORT}/`);
